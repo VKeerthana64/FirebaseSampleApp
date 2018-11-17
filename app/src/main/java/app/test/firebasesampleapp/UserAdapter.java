@@ -119,11 +119,6 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
         return userList.size();
     }
 
-    public void myloc(double latitude, double longitude) {
-        srcLat =latitude;
-        srcLng = longitude;
-    }
-
     public static class MyViewHolder extends RecyclerView.ViewHolder {
 
         public TextView myTextView;
@@ -143,6 +138,8 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
     private void showMapFromLocation(String lat, double lon) {
         double destLat = Double.parseDouble(lat), destLng = lon;
 
+        srcLat = Double.parseDouble(DrawerActivity.currentLoc.latitude);
+        srcLng = Double.parseDouble(DrawerActivity.currentLoc.longitude);
         Log.d("zxcccccccccc","dsffffffff" + srcLat+ srcLng);
         try
         {
@@ -163,6 +160,4 @@ public class UserAdapter extends RecyclerView.Adapter<UserAdapter.MyViewHolder> 
             Log.e(TAG, "Error when showing google map directions, E: " + e);
         }
     }
-
-
 }
