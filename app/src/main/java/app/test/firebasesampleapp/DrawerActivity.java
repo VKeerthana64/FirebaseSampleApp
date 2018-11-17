@@ -16,6 +16,7 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.text.TextUtils;
+import android.util.Log;
 import android.view.View;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
@@ -44,17 +45,12 @@ public class DrawerActivity extends AppCompatActivity implements NavigationView.
 
     private FirebaseAuth auth;
     DrawerLayout drawer;
-
-    private LocationManager locationManager;
-    private String provider;
-    private MyLocationListener mylistener;
-    private Criteria criteria;
-
+    public static GetCurrentLocation currentLoc;
     public RecyclerView recyclerListView;
     public UserAdapter myAdapter;
     public EditText editTextName;
     public EditText editTextlat;
-    public EditText editTextlon,editTextdesc;
+    public EditText editTextlon, editTextdesc;
     public static TextView textViewEmptyView;
     ImageView buttonAdd;
     public ProgressBar myProgressBar;
@@ -72,6 +68,9 @@ public class DrawerActivity extends AppCompatActivity implements NavigationView.
         // creating layout
         creatingLayouts();
         auth = FirebaseAuth.getInstance();
+
+        currentLoc = new GetCurrentLocation(DrawerActivity.this);
+
 
         FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
         fab.setVisibility(View.GONE);
@@ -92,47 +91,19 @@ public class DrawerActivity extends AppCompatActivity implements NavigationView.
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(DrawerActivity.this);
-
-
-        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
-        // Define the criteria how to select the location provider
-        criteria = new Criteria();
-        criteria.setAccuracy(Criteria.ACCURACY_COARSE);   //default
-
-        // user defines the criteria
-
-        criteria.setCostAllowed(false);
-        // get the best provider depending on the criteria
-        provider = locationManager.getBestProvider(criteria, false);
-
-        // the last known location of this provider
-        if (ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED && ActivityCompat.checkSelfPermission(this, android.Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            // TODO: Consider calling
-            //    ActivityCompat#requestPermissions
-            // here to request the missing permissions, and then overriding
-            //   public void onRequestPermissionsResult(int requestCode, String[] permissions,
-            //                                          int[] grantResults)
-            // to handle the case where the user grants the permission. See the documentation
-            // for ActivityCompat#requestPermissions for more details.
-            return;
-        }
-        Location location = locationManager.getLastKnownLocation(provider);
-
-        mylistener = new MyLocationListener();
-
-        if (location != null) {
-            mylistener.onLocationChanged(location);
-        } else {
-            // leads to the settings because there is no last known location
-            Intent intent = new Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS);
-            startActivity(intent);
-        }
-        // location updates: at least 1 meter and 200millsecs change
-        locationManager.requestLocationUpdates(provider, 200, 1, mylistener);
-        String a="loc"+location.getLatitude() + location.getLongitude();
-        myAdapter.myloc(location.getLatitude(),location.getLongitude());
     }
 
+    @Override
+    protected void onResume() {
+        super.onResume();
+        currentLoc.connectGoogleApi();
+    }
+
+    @Override
+    protected void onStop() {
+        super.onStop();
+        currentLoc.disConnectGoogleApi();
+    }
 
     public void creatingLayouts(){
         myProgressBar=(ProgressBar) findViewById(R.id.loader);
@@ -147,6 +118,7 @@ public class DrawerActivity extends AppCompatActivity implements NavigationView.
         myAdapter= new UserAdapter(this);
         updateAdapter();
         recyclerListView.setAdapter(myAdapter);
+//        myAdapter.myloc(latitude,longitude);
     }
 
     //add new user to database
@@ -286,38 +258,5 @@ public class DrawerActivity extends AppCompatActivity implements NavigationView.
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
-    }
-
-    private class MyLocationListener implements LocationListener {
-
-        @Override
-        public void onLocationChanged(Location location) {
-            // Initialize the location fields
-
-
-
-            Toast.makeText(DrawerActivity.this,  ""+location.getLatitude()+location.getLongitude(),
-                    Toast.LENGTH_SHORT).show();
-
-        }
-
-        @Override
-        public void onStatusChanged(String provider, int status, Bundle extras) {
-            Toast.makeText(DrawerActivity.this, provider + "'s status changed to "+status +"!",
-                    Toast.LENGTH_SHORT).show();
-        }
-
-        @Override
-        public void onProviderEnabled(String provider) {
-            Toast.makeText(DrawerActivity.this, "Provider " + provider + " enabled!",
-                    Toast.LENGTH_SHORT).show();
-
-        }
-
-        @Override
-        public void onProviderDisabled(String provider) {
-            Toast.makeText(DrawerActivity.this, "Provider " + provider + " disabled!",
-                    Toast.LENGTH_SHORT).show();
-        }
     }
 }
